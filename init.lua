@@ -4,10 +4,10 @@
 -- handy = require("handy")
 -- handy("console", "urxvt",
 --
-local awful = require("awful")
+local awful   = require("awful")
 local inspect = inspect
 
-local handy = {}
+local handy   = {}
 
 local clients = { single = {} }
 awful.screen.connect_for_each_screen(function(s)
@@ -19,17 +19,19 @@ awesome.register_xproperty("handy_visible", "boolean")
 
 local function spawn_callback(handy_id, placement, options, screen)
 	return function(c)
-		if clients[screen] == nil then clients[screen] = {} end
+		if clients[screen] == nil then
+			clients[screen] = {}
+		end
 		c:set_xproperty("handy_id", handy_id)
 		clients[screen][handy_id] = c
 
 		-- workaround for awesomeWM/awesome#1937
-		c:connect_signal("focus", function (c)
+		c:connect_signal("focus", function(c)
 			placement(c, options)
 		end)
 
 		-- remove clients that were closed
-		c:connect_signal("unmanage", function (c)
+		c:connect_signal("unmanage", function(c)
 			clients[screen][handy_id] = nil
 		end)
 	end
@@ -67,7 +69,7 @@ local function toggle_client(c, s)
 	else
 		c:move_to_tag(s.selected_tag)
 		client.focus = c
-		c.hidden = false
+		c.hidden     = false
 		c:set_xproperty("handy_visible", true)
 	end
 end
@@ -78,10 +80,10 @@ local function restore_client_single_screen(handy_id, s, key, properties, target
 		target_screen = s
 	end
 
-	for _,c in ipairs(s.all_clients) do
+	for _, c in ipairs(s.all_clients) do
 		if c:get_xproperty("handy_id") == handy_id then
 			clients[key][handy_id] = c
-			c:connect_signal("unmanage", function (c)
+			c:connect_signal("unmanage", function(c)
 				clients[key][handy_id] = nil
 			end)
 			for prop, val in pairs(properties) do
@@ -119,36 +121,42 @@ end
 --     the current screen on each call
 local function toggle(prog, placement, width, height, target_screen, class)
 	local place = placement or awful.placement.centered
-	local w = width or 0.5
-	local h = height or 0.5
-	local opt = options or {}
+	local w     = width or 0.5
+	local h     = height or 0.5
+	local opt   = options or {}
 
 	local s
 	local key
 	if not target_screen then
-		s = awful.screen.focused()
+		s   = awful.screen.focused()
 		key = s
 	elseif target_screen == 'single' then
-		s = awful.screen.focused()
+		s   = awful.screen.focused()
 		key = 'single'
 	else
-		s = target_screen
+		s   = target_screen
 		key = s
 	end
 
-	if w <= 1 then w = s.geometry.width * w end
-	if h <= 1 then h = s.geometry.height * h end
+	if w <= 1 then
+		w = s.workarea.width * w
+	end
+	if h <= 1 then
+		h = s.workarea.height * h
+	end
 
 	if clients[key][prog] ~= nil then
 		local c = clients[key][prog]
 		toggle_client(c, s)
 	else
 		local properties = { width = w, height = h, floating = true, ontop = true }
-		if restore_client(prog, key, properties, s) then return end
+		if restore_client(prog, key, properties, s) then
+			return
+		end
 
 		if class ~= nil then
 			awful_spawn_no_startup_notification(
-				prog, class, properties, placement, opt, s
+					prog, class, properties, placement, opt, s
 			)
 		else
 			awful.spawn(prog, properties, spawn_callback(prog, placement, opt, s))
@@ -157,7 +165,11 @@ local function toggle(prog, placement, width, height, target_screen, class)
 end
 
 function handy.fun(prog, placement, width, height, target_screen, class)
-	return function() toggle(prog, placement, width, height, target_screen, class) end
+	return function()
+		toggle(prog, placement, width, height, target_screen, class)
+	end
 end
 
-return setmetatable(handy, { __call = function(_, ...) return toggle(...) end })
+return setmetatable(handy, { __call = function(_, ...)
+	return toggle(...)
+end })
