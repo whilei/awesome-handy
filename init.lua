@@ -64,12 +64,14 @@ end
 
 local function toggle_client(c, s)
 	if c:isvisible() then
-		c.hidden = true
+		c.hidden       = true
+		c.skip_taskbar = true
 		c:set_xproperty("handy_visible", false)
 	else
 		c:move_to_tag(s.selected_tag)
-		client.focus = c
-		c.hidden     = false
+		client.focus   = c
+		c.hidden       = false
+		c.skip_taskbar = true
 		c:set_xproperty("handy_visible", true)
 	end
 end
